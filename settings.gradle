@@ -19,6 +19,8 @@ include 'tests'
 
 include 'core:pythonAction'
 include 'core:python2Action'
+include 'core:a3e-alpine-opencv-numpy-pillow-python2'
+include 'core:a3e-alpine-tensorflow-numpy-pillow-python3'
 
 rootProject.name = 'runtime-python'
 
