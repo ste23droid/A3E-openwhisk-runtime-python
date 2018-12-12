@@ -14,10 +14,10 @@ RUN apk add --no-cache \
 
 # Install common modules for python
 RUN pip install \
+    lxml==4.2.5 \
     beautifulsoup4==4.6.3 \
     httplib2==0.11.3 \
     kafka_python==1.4.3 \
-    lxml==4.2.5 \
     python-dateutil==2.7.3 \
     requests==2.19.1 \
     scrapy==1.5.1 \
@@ -34,19 +34,23 @@ ADD pythonrunner.py /pythonAction/
 RUN rm -rf /action
 RUN mkdir /action
 
+CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
+
+# Original author: https://raw.githubusercontent.com/themech/alpine-python3-tensorflow/master/Dockerfile
 # Prepares an alpine based image with Python3 and TF installed
 # TF is compiled for CPU and without AVX so should be able to run on older processors and virtual machines
+
 ENV TENSORFLOW_VERSION 1.10.1
 ENV BAZEL_VERSION 0.17.2
 # resources for bazel when building tensorflow: RAM, CPU, IO
-ENV LOCAL_RESOURCES 2048,.5,1.0
+ENV LOCAL_RESOURCES 2500,1.0,1.0
 ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
 
 RUN apk upgrade --update \
     && apk add --no-cache python3 py3-numpy py3-numpy-f2py libpng libjpeg-turbo libstdc++ \
     && rm -rf /usr/bin/python \
     && ln -s /usr/bin/python3 /usr/bin/python \
-    && pip3 install -U --no-cache-dir pip setuptools wheel \
+    && pip3 install -U --no-cache-dir pip setuptools \
     && : install tools needed during the build process \
     && apk add --no-cache --virtual=.build-deps curl bash openjdk8 build-base gcc g++ linux-headers zip musl-dev patch python3-dev py-numpy-dev \
     && : download and build bazel \
@@ -97,5 +101,3 @@ RUN apk upgrade --update \
     && apk del .build-deps \
     && rm -f /usr/bin/bazel \
     && rm -rf /tmp/* /root/.cache
-
-CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
