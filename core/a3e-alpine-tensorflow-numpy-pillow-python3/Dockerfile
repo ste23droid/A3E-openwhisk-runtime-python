@@ -36,39 +36,62 @@ RUN mkdir /action
 
 CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
 
-# Original author: https://raw.githubusercontent.com/themech/alpine-python3-tensorflow/master/Dockerfile
-# Prepares an alpine based image with Python3 and TF installed
-# TF is compiled for CPU and without AVX so should be able to run on older processors and virtual machines
+# Based on https://github.com/better/alpine-tensorflow/blob/master/Dockerfile
 
+ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
+# resources for bazel when building tensorflow: RAM, CPU, IO
+ENV LOCAL_RESOURCES 2048,0.7,1.0
 ENV TENSORFLOW_VERSION 1.10.1
 ENV BAZEL_VERSION 0.17.2
-# resources for bazel when building tensorflow: RAM, CPU, IO
-ENV LOCAL_RESOURCES 2500,1.0,1.0
-ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
-
-RUN apk upgrade --update \
-    && apk add --no-cache python3 py3-numpy py3-numpy-f2py libpng libjpeg-turbo libstdc++ \
-    && rm -rf /usr/bin/python \
-    && ln -s /usr/bin/python3 /usr/bin/python \
-    && pip3 install -U --no-cache-dir pip setuptools \
-    && : install tools needed during the build process \
-    && apk add --no-cache --virtual=.build-deps curl bash openjdk8 build-base gcc g++ linux-headers zip musl-dev patch python3-dev py-numpy-dev \
-    && : download and build bazel \
+RUN apk add --no-cache python3 python3-tkinter py3-numpy py3-numpy-f2py freetype libpng libjpeg-turbo imagemagick graphviz git libstdc++
+RUN apk add --no-cache --virtual=.build-deps \
+        bash \
+        cmake \
+        curl \
+        freetype-dev \
+        gcc \
+        g++ \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        linux-headers \
+        build-base \
+        make \
+        musl-dev \
+        openblas-dev \
+        openjdk8 \
+        patch \
+        perl \
+        python3-dev \
+        py-numpy-dev \
+        rsync \
+        sed \
+        swig \
+        zip \
     && cd /tmp \
-    && curl -SLO https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip \
+    && pip3 install --no-cache-dir wheel \
+    && $(cd /usr/bin && ln -s python3 python)
+
+# Bazel download
+RUN curl -SLO https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip \
     && mkdir bazel-${BAZEL_VERSION} \
-    && unzip -qd bazel-${BAZEL_VERSION} bazel-${BAZEL_VERSION}-dist.zip \
-    && cd bazel-${BAZEL_VERSION} \
+    && unzip -qd bazel-${BAZEL_VERSION} bazel-${BAZEL_VERSION}-dist.zip
+
+# Bazel install
+RUN cd bazel-${BAZEL_VERSION} \
     && sed -i -e '/"-std=c++0x"/{h;s//"-fpermissive"/;x;G}' tools/cpp/cc_configure.bzl \
     && sed -i -e '/#endif  \/\/ COMPILER_MSVC/{h;s//#else/;G;s//#include <sys\/stat.h>/;G;}' third_party/ijar/common.h \
     && sed -i -e 's/-classpath/-J-Xmx8192m -J-Xms128m -classpath/g' scripts/bootstrap/compile.sh \
     && bash compile.sh \
-    && cp -p output/bazel /usr/bin/ \
-    && : download and build tensorflow pip package \
-    && cd /tmp \
-    && wget -q -O - https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VERSION}.tar.gz | tar -xzf - -C /tmp \
-    && cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
-    && : need to patch the sources \
+    && cp -p output/bazel /usr/bin/
+
+# Download Tensorflow
+RUN cd /tmp \
+    && curl -SL https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VERSION}.tar.gz \
+        | tar xzf -
+
+# Build Tensorflow
+RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
+    && : musl-libc does not have "secure_getenv" function, also patch sources \
     && sed -i -e '/JEMALLOC_HAVE_SECURE_GETENV/d' third_party/jemalloc.BUILD \
     && sed -i -e '/define TF_GENERATE_BACKTRACE/d' tensorflow/core/platform/default/stacktrace.h \
     && sed -i -e '/define TF_GENERATE_STACKTRACE/d' tensorflow/core/platform/stacktrace_handler.cc \
@@ -92,12 +115,19 @@ RUN apk upgrade --update \
         TF_NEED_OPENCL_SYCL=0 \
         TF_DOWNLOAD_CLANG=0 \
         TF_SET_ANDROID_WORKSPACE=0 \
-        bash configure \
-    && bazel build -c opt --local_resources ${LOCAL_RESOURCES} --jobs 1 //tensorflow/tools/pip_package:build_pip_package \
-    && ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg \
-    && cd \
-    && pip3 install --no-cache-dir /tmp/tensorflow_pkg/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl \
-    && : cleanup temp files \
-    && apk del .build-deps \
-    && rm -f /usr/bin/bazel \
-    && rm -rf /tmp/* /root/.cache
+        bash configure
+RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
+    && bazel build -c opt --local_resources ${LOCAL_RESOURCES} --jobs 1 //tensorflow/tools/pip_package:build_pip_package
+# RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION}/bazel-bin/tensorflow/tools/pip_package/ && ls -a
+# RUN pip install --upgrade pip
+# RUN pip3.6 install wheel setuptools
+# RUN pyenv global 3.6.0 && pip3 install wheel
+RUN export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/site-packages
+RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
+    && ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
+# RUN cd /tmp/tensorflow_pkg && ls -a
+RUN cp /tmp/tensorflow_pkg/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl /root
+
+# Make sure it's built properly
+RUN pip3 install --no-cache-dir /root/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl \
+    && python3 -c 'import tensorflow'
