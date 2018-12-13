@@ -1,59 +1,11 @@
-FROM openwhisk/dockerskeleton:latest
-
-# RUN which pip
-# /usr/local/bin/pip
-# RUN which pip3
-# /usr/local/bin/pip3
-
-# RUN ls -a
-# RUN cd /actionProxy && ls
-# RUN cd ..
-# RUN cd /action && ls
-
-RUN apk add --no-cache \
-        bzip2-dev \
-        gcc \
-        libc-dev \
-        libxslt-dev \
-        libxml2-dev \
-        libffi-dev \
-        linux-headers \
-        openssl-dev \
-        # for Pillow support
-        jpeg-dev
-
-# Install common modules for python
-RUN pip install \
-    lxml==4.2.5 \
-    beautifulsoup4==4.6.3 \
-    httplib2==0.11.3 \
-    kafka_python==1.4.3 \
-    python-dateutil==2.7.3 \
-    requests==2.19.1 \
-    scrapy==1.5.1 \
-    simplejson==3.16.0 \
-    virtualenv==16.0.0 \
-    twisted==18.7.0 \
-    # adding Pillow support
-    Pillow==5.3.0
-
-ENV FLASK_PROXY_PORT 8080
-
-RUN mkdir -p /pythonAction
-ADD pythonrunner.py /pythonAction/
-RUN rm -rf /action
-RUN mkdir /action
-
-CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
-
 # Based on https://github.com/better/alpine-tensorflow/blob/master/Dockerfile
 
 ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
 # resources for bazel when building tensorflow: RAM, CPU, IO
-ENV LOCAL_RESOURCES 3048,1.0,1.0
+ENV LOCAL_RESOURCES 2048,0.7,1.0
 ENV TENSORFLOW_VERSION 1.10.1
 ENV BAZEL_VERSION 0.17.2
-RUN apk add --no-cache py3-numpy py3-numpy-f2py freetype libpng libjpeg-turbo imagemagick graphviz git libstdc++
+RUN apk add --no-cache python3 python3-tkinter py3-numpy py3-numpy-f2py freetype libpng libjpeg-turbo imagemagick graphviz git libstdc++
 RUN apk add --no-cache --virtual=.build-deps \
         bash \
         cmake \
@@ -71,33 +23,18 @@ RUN apk add --no-cache --virtual=.build-deps \
         openjdk8 \
         patch \
         perl \
+        python3-dev \
         py-numpy-dev \
         rsync \
         sed \
         swig \
         zip \
-    && pip3 install --no-cache-dir wheel
-
-RUN which pip
-# /usr/local/bin/pip
-RUN which pip3
-# /usr/local/bin/pip3
-RUN pip --version
-# pip 18.1 from /usr/local/lib/python3.6/site-packages/pip (python 3.6)
-RUN pip3 --version
-# pip 18.1 from /usr/local/lib/python3.6/site-packages/pip (python 3.6)
-RUN which python
-# /usr/local/bin/python
-RUN which python3
-# /usr/local/bin/python3
-RUN python --version
-# Python 3.6.7
-RUN python3 --version
-# Python 3.6.7
+    && cd /tmp \
+    && pip3 install --no-cache-dir wheel \
+    && $(cd /usr/bin && ln -s python3 python)
 
 # Bazel download
-RUN cd /tmp \
-    && curl -SLO https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip \
+RUN curl -SLO https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip \
     && mkdir bazel-${BAZEL_VERSION} \
     && unzip -qd bazel-${BAZEL_VERSION} bazel-${BAZEL_VERSION}-dist.zip
 
@@ -115,7 +52,6 @@ RUN cd /tmp \
         | tar xzf -
 
 # Build Tensorflow
-# See https://github.com/tensorflow/tensorflow/issues/348
 RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
     && : musl-libc does not have "secure_getenv" function, also patch sources \
     && sed -i -e '/JEMALLOC_HAVE_SECURE_GETENV/d' third_party/jemalloc.BUILD \
@@ -123,8 +59,8 @@ RUN cd /tmp/tensorflow-${TENSORFLOW_VERSION} \
     && sed -i -e '/define TF_GENERATE_STACKTRACE/d' tensorflow/core/platform/stacktrace_handler.cc \
     && : the types below are fixed in tensorflow 1.11 \
     && sed -i -e 's/uint /uint32_t /g' tensorflow/contrib/lite/kernels/internal/spectrogram.cc \
-    && PYTHON_BIN_PATH=/usr/local/bin/python \
-        PYTHON_LIB_PATH=/usr/local/lib/python3.6/site-packages \
+    && PYTHON_BIN_PATH=/usr/bin/python \
+        PYTHON_LIB_PATH=/usr/lib/python3.6/site-packages \
         CC_OPT_FLAGS="-march=native" \
         TF_NEED_JEMALLOC=1 \
         TF_NEED_GCP=0 \
