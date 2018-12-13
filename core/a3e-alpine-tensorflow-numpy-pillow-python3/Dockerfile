@@ -76,6 +76,7 @@ RUN apk add --no-cache --virtual=.build-deps \
         sed \
         swig \
         zip \
+    && cd /tmp \
     && pip3 install --no-cache-dir wheel
 
 RUN which pip
@@ -102,7 +103,7 @@ RUN cd /tmp \
     && unzip -qd bazel-${BAZEL_VERSION} bazel-${BAZEL_VERSION}-dist.zip
 
 # Bazel install
-RUN cd bazel-${BAZEL_VERSION} \
+RUN cd /tmp/bazel-${BAZEL_VERSION} \
     && sed -i -e '/"-std=c++0x"/{h;s//"-fpermissive"/;x;G}' tools/cpp/cc_configure.bzl \
     && sed -i -e '/#endif  \/\/ COMPILER_MSVC/{h;s//#else/;G;s//#include <sys\/stat.h>/;G;}' third_party/ijar/common.h \
     && sed -i -e 's/-classpath/-J-Xmx8192m -J-Xms128m -classpath/g' scripts/bootstrap/compile.sh \
@@ -151,3 +152,8 @@ RUN cp /tmp/tensorflow_pkg/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86
 # Make sure it's built properly
 RUN pip3 install --no-cache-dir /root/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl \
     && python3 -c 'import tensorflow'
+
+# cleanup temp files
+RUN apk del .build-deps \
+    && rm -f /usr/bin/bazel \
+    && rm -rf /tmp/*
