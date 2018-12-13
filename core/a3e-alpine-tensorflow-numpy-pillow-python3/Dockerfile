@@ -44,8 +44,6 @@ ADD pythonrunner.py /pythonAction/
 RUN rm -rf /action
 RUN mkdir /action
 
-CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
-
 # Based on https://github.com/better/alpine-tensorflow/blob/master/Dockerfile
 
 ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
@@ -159,4 +157,6 @@ RUN pip3 install --no-cache-dir /root/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36
 RUN apk del .build-deps \
     && rm -f /usr/bin/bazel \
     && rm -rf /tmp/*
-RUN rm -rf /root/.cache
+
+# open whisk python action command
+CMD ["/bin/bash", "-c", "cd pythonAction && python -u pythonrunner.py"]
