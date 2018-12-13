@@ -71,13 +71,15 @@ RUN apk add --no-cache --virtual=.build-deps \
         openjdk8 \
         patch \
         perl \
+        python3-dev \
         py-numpy-dev \
         rsync \
         sed \
         swig \
-        zip \
-    && cd /tmp \
-    && pip3 install --no-cache-dir wheel
+        zip
+
+# install wheel (if needed)
+RUN pip3 install --no-cache-dir wheel numpy
 
 RUN which pip
 # /usr/local/bin/pip
@@ -157,3 +159,4 @@ RUN pip3 install --no-cache-dir /root/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36
 RUN apk del .build-deps \
     && rm -f /usr/bin/bazel \
     && rm -rf /tmp/*
+RUN rm -rf /root/.cache
