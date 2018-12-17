@@ -1,23 +1,18 @@
 FROM python:2-alpine3.6
 
-# This dockerfile is based on:
-# - https://github.com/julianbei/alpine-opencv-microimage
-# - https://github.com/daveresbk/docker-thumbor/blob/master/alpine-opencv-microimage
-# - https://github.com/apache/incubator-openwhisk-runtime-python/
-# This dockerfile adds support for:
-# - build openCv with optimizations
-# - build the Pillow library
-
 RUN echo -e '@edgunity http://nl.alpinelinux.org/alpine/edge/community\n\
 @edge http://nl.alpinelinux.org/alpine/edge/main\n\
 @testing http://nl.alpinelinux.org/alpine/edge/testing\n\
 @community http://dl-cdn.alpinelinux.org/alpine/edge/community'\
   >> /etc/apk/repositories
 
-RUN apk update && apk upgrade
+ENV CC /usr/bin/clang
+ENV CXX /usr/bin/clang++
+ENV OPENCV_VERSION 3.4.2
 
-RUN apk add --update --no-cache \
-  # --virtual .build-deps \
+RUN apk update \
+    && apk upgrade \
+    && apk add --update --no-cache \
       build-base \
       openblas-dev \
       unzip \
@@ -49,48 +44,44 @@ RUN apk add --update --no-cache \
       # A C language family front-end for LLVM (development files)
       clang-dev \
 
-      linux-headers && \
+      linux-headers \
 
-      pip install numpy
+    && pip install numpy \
 
-ENV CC /usr/bin/clang
-ENV CXX /usr/bin/clang++
-ENV OPENCV_VERSION 3.4.2
-
-RUN mkdir /opt && cd /opt && \
-  wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip && \
-  unzip ${OPENCV_VERSION}.zip && \
-  rm -rf ${OPENCV_VERSION}.zip && \
-  cd /opt/opencv-${OPENCV_VERSION} && \
-  mkdir build && \
-  cd build && \
-  cmake -D CMAKE_BUILD_TYPE=RELEASE \
-	-D BUILD_PYTHON_SUPPORT=ON \
-	-D BUILD_EXAMPLES=OFF \
-	-D CMAKE_INSTALL_PREFIX=/usr/local \
-	-D WITH_FFMPEG=NO \
-	-D ENABLE_FAST_MATH=ON \
-        -D WITH_TBB=ON \
-        -D WITH_IPP=ON	\
-        -D WITH_V4L=OFF  \
-        -D ENABLE_AVX=ON \
-        -D ENABLE_AVX2=ON \
-        -D ENABLE_SSSE3=ON \
-        -D ENABLE_SSE41=ON \
-        -D ENABLE_SSE42=ON \
-        -D ENABLE_POPCNT=ON \
-        -D BUILD_TESTS=OFF \
-	-D BUILD_PERF_TESTS=OFF \
-	-D INSTALL_PYTHON_EXAMPLES=OFF \
-	-D INSTALL_C_EXAMPLES=OFF \
-	-D WITH_OPENEXR=NO .. && \
-  make VERBOSE=1 && \
-  make && \
-  make install && \
-  rm -rf /opt/opencv-${OPENCV_VERSION}
-
-RUN rm -rf /var/cache/apk/*
-RUN rm -rf /tmp/*
+    && mkdir /opt \
+    && cd /opt \
+    && wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip \
+    && unzip ${OPENCV_VERSION}.zip \
+    && rm -rf ${OPENCV_VERSION}.zip \
+    && cd /opt/opencv-${OPENCV_VERSION} \
+    && mkdir build \
+    && cd build \
+    && cmake -D CMAKE_BUILD_TYPE=RELEASE \
+              -D BUILD_PYTHON_SUPPORT=ON \
+              -D BUILD_EXAMPLES=OFF \
+              -D CMAKE_INSTALL_PREFIX=/usr/local \
+              -D WITH_FFMPEG=NO \
+              -D ENABLE_FAST_MATH=ON \
+              -D WITH_TBB=ON \
+              -D WITH_IPP=ON	\
+              -D WITH_V4L=OFF  \
+              -D ENABLE_AVX=ON \
+              -D ENABLE_AVX2=ON \
+              -D ENABLE_SSSE3=ON \
+              -D ENABLE_SSE41=ON \
+              -D ENABLE_SSE42=ON \
+              -D ENABLE_POPCNT=ON \
+              -D BUILD_TESTS=OFF \
+              -D BUILD_PERF_TESTS=OFF \
+              -D INSTALL_PYTHON_EXAMPLES=OFF \
+              -D INSTALL_C_EXAMPLES=OFF \
+              -D WITH_OPENEXR=NO .. \
+    && make VERBOSE=1  \
+    && make \
+    && make install  \
+    && rm -rf /opt/opencv-${OPENCV_VERSION} \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/*
 
 # here starts the OpenWhiskPython2Action dockerfile
 RUN apk add --no-cache \
