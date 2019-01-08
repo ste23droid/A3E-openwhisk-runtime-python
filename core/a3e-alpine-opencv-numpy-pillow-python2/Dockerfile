@@ -60,22 +60,14 @@ RUN apk update \
               -D BUILD_PYTHON_SUPPORT=ON \
               -D BUILD_EXAMPLES=OFF \
               -D CMAKE_INSTALL_PREFIX=/usr/local \
-              -D WITH_FFMPEG=NO \
-              -D ENABLE_FAST_MATH=ON \
+              -D WITH_FFMPEG=OFF \
               -D WITH_TBB=ON \
-              -D WITH_IPP=ON	\
-              -D WITH_V4L=OFF  \
-              -D ENABLE_AVX=ON \
-              -D ENABLE_AVX2=ON \
-              -D ENABLE_SSSE3=ON \
-              -D ENABLE_SSE41=ON \
-              -D ENABLE_SSE42=ON \
-              -D ENABLE_POPCNT=ON \
+              -D WITH_IPP=OFF	\
               -D BUILD_TESTS=OFF \
               -D BUILD_PERF_TESTS=OFF \
               -D INSTALL_PYTHON_EXAMPLES=OFF \
               -D INSTALL_C_EXAMPLES=OFF \
-              -D WITH_OPENEXR=NO .. \
+              -D WITH_OPENEXR=OFF .. \
     && make VERBOSE=1  \
     && make \
     && make install  \

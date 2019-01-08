@@ -21,15 +21,7 @@ distDocker.dependsOn 'copyFiles'
 distDocker.finalizedBy 'rmFiles'
 
 def runners = files(
-    new File(project(':core:pythonAction').projectDir, 'pythonrunner.py'),
-    new File('./neuralTransfer', 'feathers.t7'),
-    new File('./neuralTransfer', 'udnie.t7'),
-    new File('./neuralTransfer', 'the_scream.t7'),
-    new File('./neuralTransfer', 'mosaic.t7'),
-    new File('./neuralTransfer', 'la_muse.t7'),
-    new File('./neuralTransfer', 'candy.t7'),
-    new File('./imageRecognition', 'MobileNetSSD_deploy.caffemodel'),
-    new File('./imageRecognition', 'MobileNetSSD_deploy.prototxt.txt')
+    new File(project(':core:pythonAction').projectDir, 'pythonrunner.py')
 )
 
 task copyFiles(type: Copy) {
