@@ -91,6 +91,9 @@ class PythonRunner(ActionRunner):
             traceback.print_exc(file=sys.stderr)
 
         if result and isinstance(result, dict):
+            if 'cache' in result:
+                self.global_context['cache'] = result['cache']
+                del result['cache']
             return (200, result)
         else:
             return (502, {'error': 'The action did not return a dictionary.'})
