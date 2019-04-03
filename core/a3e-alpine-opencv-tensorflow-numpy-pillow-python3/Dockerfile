@@ -1,6 +1,12 @@
 #FROM openwhisk/dockerskeleton:latest
 FROM ste23/whisk-python3action-alpine-tensorflow-numpy-pillow
 
+RUN echo -e '@edgunity http://nl.alpinelinux.org/alpine/edge/community\n\
+@edge http://nl.alpinelinux.org/alpine/edge/main\n\
+@testing http://nl.alpinelinux.org/alpine/edge/testing\n\
+@community http://dl-cdn.alpinelinux.org/alpine/edge/community'\
+  >> /etc/apk/repositories
+
 ENV CC /usr/bin/clang
 ENV CXX /usr/bin/clang++
 ENV OPENCV_VERSION 3.4.2
