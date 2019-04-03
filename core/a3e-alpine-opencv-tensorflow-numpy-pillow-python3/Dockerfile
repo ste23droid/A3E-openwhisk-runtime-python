@@ -1,5 +1,5 @@
 #FROM openwhisk/dockerskeleton:latest
-FROM ste23/whisk-python2action-alpine-opencv-numpy
+FROM ste23/whisk-python3action-alpine-tensorflow-numpy-pillow
 
 ENV CC /usr/bin/clang
 ENV CXX /usr/bin/clang++
