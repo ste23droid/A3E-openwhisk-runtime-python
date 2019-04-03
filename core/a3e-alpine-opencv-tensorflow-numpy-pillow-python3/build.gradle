@@ -15,5 +15,5 @@
  * limitations under the License.
  */
 
-ext.dockerImageName = 'a3e-alpine-tensorflow-numpy-pillow-python3'
+ext.dockerImageName = 'a3e-alpine-opencv-tensorflow-numpy-pillow-python3'
 apply from: '../../gradle/docker.gradle'
