@@ -22,6 +22,7 @@ include 'core:python2Action'
 include 'core:a3e-alpine-opencv-numpy-pillow-python2'
 include 'core:a3e-alpine-tensorflow-numpy-pillow-python3'
 include 'core:a3e-alpine-opencv-numpy-python2'
+include 'core:a3e-alpine-opencv-tensorflow-numpy-pillow-python3'
 
 rootProject.name = 'runtime-python'
 

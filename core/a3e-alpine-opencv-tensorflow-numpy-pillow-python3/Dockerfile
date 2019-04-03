@@ -1,5 +1,5 @@
 #FROM openwhisk/dockerskeleton:latest
-FROM ste23/whisk-python3action-alpine-tensorflow-numpy-pillow
+FROM ste23/whisk-python3action-alpine-tensorflow-numpy-pillow:prod
 
 RUN echo -e '@edgunity http://nl.alpinelinux.org/alpine/edge/community\n\
 @edge http://nl.alpinelinux.org/alpine/edge/main\n\
